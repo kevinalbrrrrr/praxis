@@ -40,20 +40,34 @@ export async function backupVerpacken({ datenbank, pdfs, info = {} }, passwort) 
   return aus;
 }
 
-export async function backupEntpacken(bytes, passwort) {
+// Nachsichtig beim Einspielen: Gross/klein, Leerzeichen und fehlende oder falsche Striche
+// (das iPhone macht gern lange Striche daraus) sollen nicht scheitern.
+// Probiert wird erst die Eingabe, dann Varianten davon; die passende Schreibweise wird zurueckgegeben.
+export function passwortVarianten(eingabe) {
+  const roh = String(eingabe ?? "");
+  const getrimmt = roh.trim();
+  const kern = getrimmt.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const gruppiert = kern.match(/.{1,4}/g)?.join("-") ?? "";
+  return [...new Set([roh, getrimmt, getrimmt.toLowerCase(), gruppiert, kern])].filter(Boolean);
+}
+
+export async function backupEntpacken(bytes, eingabe) {
   const b = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
   if (b.length < MAGIC.length + 28 || MAGIC.some((x, i) => b[i] !== x)) {
     throw new Error("Das ist keine Backup-Datei der Praxis-App.");
   }
   const salt = b.slice(MAGIC.length, MAGIC.length + 16);
   const iv = b.slice(MAGIC.length + 16, MAGIC.length + 28);
-  let nutzlast;
-  try {
-    nutzlast = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv },
-      await schluessel(passwort, salt, "decrypt"), b.slice(MAGIC.length + 28)));
-  } catch {
-    throw new Error("Das Passwort stimmt nicht, oder die Datei ist beschädigt.");
+  let nutzlast, passwort;
+  for (const kandidat of passwortVarianten(eingabe)) {
+    try {
+      nutzlast = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv },
+        await schluessel(kandidat, salt, "decrypt"), b.slice(MAGIC.length + 28)));
+      passwort = kandidat;
+      break;
+    } catch { /* naechste Schreibweise */ }
   }
+  if (!nutzlast) throw new Error("Das Passwort stimmt nicht, oder die Datei ist beschädigt.");
   const metaLaenge = new DataView(nutzlast.buffer).getUint32(0);
   const meta = JSON.parse(new TextDecoder().decode(nutzlast.subarray(4, 4 + metaLaenge)));
   let pos = 4 + metaLaenge;
@@ -61,5 +75,5 @@ export async function backupEntpacken(bytes, passwort) {
   pos += meta.datenbank;
   const pdfs = {};
   for (const [nr, laenge] of meta.pdfs) { pdfs[nr] = nutzlast.slice(pos, pos + laenge); pos += laenge; }
-  return { meta, datenbank, pdfs };
+  return { meta, datenbank, pdfs, passwort };
 }

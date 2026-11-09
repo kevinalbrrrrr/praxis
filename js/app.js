@@ -744,7 +744,7 @@ async function backupEinspielen(datei, nachher = "#/") {
   let bytes;
   try { bytes = new Uint8Array(await datei.arrayBuffer()); } catch { return meldung("Die Datei ließ sich nicht lesen.", "fehler"); }
   const { wert, daten } = await dialog(h`<h2>Sicherung öffnen</h2>
-    <label class="feld"><span>Passwort der Sicherung</span><input name="pw" type="text" autocomplete="off" autocapitalize="off"></label>
+    <label class="feld"><span>Passwort der Sicherung</span><input name="pw" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
     <div class="knopfreihe"><button class="knopf haupt" value="ja">Öffnen</button><button class="knopf" value="abbrechen">Abbrechen</button></div>`.t);
   if (wert !== "ja") return;
   try {
@@ -754,7 +754,7 @@ async function backupEinspielen(datei, nachher = "#/") {
     const vorhanden = !!S.aktuelleDb();
     if (!await bestaetigen("Sicherung einspielen?", `Stand ${stand}: ${lage.rechnungen} Rechnungen, ${lage.kunden} Kunden.${vorhanden ? " Die aktuellen Daten auf diesem iPhone werden ersetzt." : ""}`, { ja: "Einspielen", gefahr: vorhanden })) return;
     await S.einspielen(inhalt);
-    await S.kvSchreiben("backup_passwort", daten.get("pw"));
+    await S.kvSchreiben("backup_passwort", inhalt.passwort);
     await S.kvSchreiben("letztes_backup", inhalt.meta.erstellt);
     meldung("Sicherung eingespielt.");
     hin(nachher);

@@ -1,6 +1,6 @@
 // Haelt die App offline verfuegbar. Bei JEDER Aenderung an einer Datei VERSION erhoehen,
 // sonst bekommt das iPhone das Update nicht. tests/app.test.mjs prueft die Dateiliste.
-const VERSION = "praxis-1";
+const VERSION = "praxis-2";
 const DATEIEN = [
   "./", "index.html", "app.css", "manifest.webmanifest",
   "js/app.js", "js/logik.js", "js/speicher.js", "js/pdf.js", "js/ui.js", "js/backup-format.js",
