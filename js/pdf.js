@@ -9,6 +9,8 @@ const BREITE = 210;
 const UNTEN = 280;
 const euro = (x) => `${Number(x).toFixed(2).replace(".", ",")} €`;
 const datumDe = (iso) => (iso && iso.length === 10 ? `${iso.slice(8)}.${iso.slice(5, 7)}.${iso.slice(0, 4)}` : iso || "");
+// IBAN immer in Vierergruppen, egal wie sie in den Einstellungen getippt wurde.
+export const ibanText = (iban) => String(iban || "").replace(/\s/g, "").toUpperCase().replace(/(.{4})(?=.)/g, "$1 ");
 const mengeText = (m) => (m === 1 ? "1" : Number(m).toFixed(2).replace(".", ","));
 
 function qrZeichnen(doc, qrcode, text, x, y, groesse) {
@@ -30,7 +32,8 @@ function kopf(doc, firma, r) {
   doc.setFont("helvetica", "bold").setFontSize(12).setTextColor(30);
   doc.text(doc.splitTextToSize(firma.name, 105), RAND, 20);
   doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(70);
-  const absender = [firma.strasse, firma.plz_ort, firma.telefon && `Tel: ${firma.telefon}`, firma.mobil && `Mobil: ${firma.mobil}`].filter(Boolean);
+  const absender = [firma.strasse, firma.plz_ort, firma.telefon && `Tel: ${firma.telefon}`, firma.mobil && `Mobil: ${firma.mobil}`,
+    firma.steuernr && `Steuernummer: ${firma.steuernr}`].filter(Boolean);
   doc.text(absender, BREITE - RAND, 20, { align: "right", lineHeightFactor: 1.35 });
 
   doc.setFontSize(7).setTextColor(110);
@@ -123,7 +126,8 @@ function rechnungZeichnen(doc, libs, { firma, rechnung: r, positionen }) {
     `Bitte überweisen Sie den Betrag innerhalb von ${firma.zahlungsziel_tage} Tagen:`,
     `Bank: ${firma.bank}`,
     `Kontoinhaber: ${firma.inhaber}`,
-    `IBAN: ${firma.iban}    BIC: ${firma.bic}`,
+    `IBAN: ${ibanText(firma.iban)}`,
+    `BIC: ${firma.bic}`,
     `Verwendungszweck: ${r.rechnungsnr} ${r.kundennr}`,
   ];
   doc.text(zahlung, RAND, y + 5, { lineHeightFactor: 1.35 });

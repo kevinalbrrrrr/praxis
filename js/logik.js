@@ -233,6 +233,6 @@ export function bewohnerNeu(db, heim, b) {
 
 // ---------- Ueberweisungs-QR (EPC/GiroCode), Feldfolge wie in der alten App ----------
 export function epcText(firma, rechnung) {
-  return ["BCD", "002", "1", "SCT", firma.bic, firma.inhaber, String(firma.iban).replace(/\s/g, ""),
+  return ["BCD", "002", "1", "SCT", firma.bic, firma.inhaber, String(firma.iban).replace(/\s/g, "").toUpperCase(),
     `EUR${Number(rechnung.betrag).toFixed(2)}`, "", rechnung.rechnungsnr, ""].join("\n");
 }
